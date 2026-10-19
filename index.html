@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكي نظام SAP Fiori - ERP المؤسسي</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Dashboards -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sapBlue: '#005073',
+                        sapLightBlue: '#1d9bf0',
+                        sapDark: '#111e2a',
+                        sapGray: '#f8f9fa',
+                        sapCard: '#ffffff',
+                        sapBorder: '#e5e7eb'
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f1f5f9;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased flex h-screen overflow-hidden">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 left-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="bg-sapDark text-slate-300 w-64 flex-shrink-0 flex flex-col transition-all duration-300 z-30 shadow-xl">
+        <!-- Logo / Header -->
+        <div class="h-16 flex items-center justify-between px-4 bg-[#0a131c] border-b border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white font-black text-xl shadow-md">
+                    S
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-base tracking-wide">SAP Fiori ERP</h1>
+                    <p class="text-xs text-sky-400 font-semibold">إصدار الشركات 2026</p>
+                </div>
+            </div>
+            <button id="sidebar-toggle" class="text-slate-400 hover:text-white lg:hidden">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1.5">
+            <a href="#" onclick="switchTab('dashboard')" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all bg-sky-600 text-white shadow-md shadow-sky-900/30" data-target="dashboard">
+                <i class="fa-solid fa-chart-pie w-5 text-center text-lg"></i>
+                <span>لوحة التحكم (Dashboard)</span>
+            </a>
+            <a href="#" onclick="switchTab('procurement')" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:bg-slate-800 hover:text-white" data-target="procurement">
+                <i class="fa-solid fa-cart-shopping w-5 text-center text-lg"></i>
+                <span>المشتريات (Procurement)</span>
+            </a>
+            <a href="#" onclick="switchTab('inventory')" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:bg-slate-800 hover:text-white" data-target="inventory">
+                <i class="fa-solid fa-boxes-stacked w-5 text-center text-lg"></i>
+                <span>إدارة المخزون (Inventory)</span>
+            </a>
+            <a href="#" onclick="switchTab('sales')" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:bg-slate-800 hover:text-white" data-target="sales">
+                <i class="fa-solid fa-file-invoice-dollar w-5 text-center text-lg"></i>
+                <span>المبيعات والتوزيع (Sales)</span>
+            </a>
+            <a href="#" onclick="switchTab('hr')" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all text-slate-300 hover:bg-slate-800 hover:text-white" data-target="hr">
+                <i class="fa-solid fa-users-gear w-5 text-center text-lg"></i>
+                <span>الموارد البشرية (HR & Payroll)</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer / User Profile -->
+        <div class="p-4 border-t border-slate-800 bg-[#0a131c] flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 flex items-center font-bold justify-center">
+                م.أ
+            </div>
+            <div class="overflow-hidden">
+                <h4 class="text-xs font-bold text-white truncate">مهندس/ أحمد الراشد</h4>
+                <p class="text-[10px] text-slate-400 truncate">مدير النظام المالي (ERP Admin)</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Top Navbar -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-20 shadow-sm flex-shrink-0">
+            <div class="flex items-center gap-4">
+                <button id="menu-btn" class="text-slate-600 hover:text-slate-900 lg:hidden focus:outline-none">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div class="relative hidden sm:block w-72">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" id="global-search" placeholder="بحث عام في الأوامر، الموردين، الأصناف..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500 focus:bg-white transition-all">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- System Status Indicator -->
+                <div class="hidden md:flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>متصل بقاعدة البيانات (SAP HANA Cloud)</span>
+                </div>
+
+                <!-- Notifications Button -->
+                <button onclick="showNotification('لا توجد إشعارات جديدة حالياً', 'info')" class="relative p-2 text-slate-600 hover:text-sky-600 hover:bg-slate-100 rounded-xl transition-all">
+                    <i class="fa-regular fa-bell text-lg"></i>
+                    <span class="absolute top-1.5 left-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+                </button>
+
+                <!-- Quick Action Modal Trigger -->
+                <button onclick="openGlobalModal()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-md shadow-sky-600/20 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>إدخال سريع</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Area -->
+        <main class="flex-1 overflow-y-auto p-6 bg-slate-50">
+
+            <!-- ================= TAB 1: DASHBOARD ================= -->
+            <div id="tab-dashboard" class="tab-content space-y-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-sapBlue to-sky-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold mb-1">مرحباً بك مجدداً، أحمد الراشد</h2>
+                        <p class="text-sky-100 text-sm">إليك ملخص الأداء المالي والتشغيلي لنظام تخطيط موارد المؤسسات اليوم.</p>
+                    </div>
+                    <div class="relative z-10 flex gap-3">
+                        <button onclick="switchTab('sales')" class="bg-white/10 hover:bg-white/25 border border-white/20 px-4 py-2 rounded-xl text-sm font-semibold backdrop-blur-md transition-all">تقارير المبيعات</button>
+                        <button onclick="switchTab('inventory')" class="bg-white text-sapBlue hover:bg-sky-50 px-4 py-2 rounded-xl text-sm font-semibold shadow-md transition-all">إدارة المخزون</button>
+                    </div>
+                    <!-- Decorative background shapes -->
+                    <div class="absolute -left-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full pointer-events-none"></div>
+                </div>
+
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <!-- KPI 1 -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 mb-1">إجمالي المبيعات (الشهر)</p>
+                            <h3 class="text-2xl font-black text-slate-800" id="kpi-sales">1,482,500 ج.م</h3>
+                            <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1">
+                                <i class="fa-solid fa-arrow-trend-up"></i> +14.2% مقارنة بالشهر السابق
+                            </span>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                    </div>
+                    <!-- KPI 2 -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 mb-1">قيمة المخزون الحالي</p>
+                            <h3 class="text-2xl font-black text-slate-800" id="kpi-inventory">3,250,000 ج.م</h3>
+                            <span class="text-xs font-semibold text-sky-600 flex items-center gap-1 mt-1">
+                                <i class="fa-solid fa-boxes-stacked"></i> 1,420 صنف مسجل
+                            </span>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid fa-warehouse"></i>
+                        </div>
+                    </div>
+                    <!-- KPI 3 -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 mb-1">الطلبات المعلقة (Pending)</p>
+                            <h3 class="text-2xl font-black text-slate-800" id="kpi-orders">38 طلب</h3>
+                            <span class="text-xs font-semibold text-amber-600 flex items-center gap-1 mt-1">
+                                <i class="fa-solid fa-clock"></i> تتطلب مراجعة فورية
+                            </span>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                    </div>
+                    <!-- KPI 4 -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 mb-1">صافي الأرباح التشغيلية</p>
+                            <h3 class="text-2xl font-black text-slate-800" id="kpi-profit">614,200 ج.م</h3>
+                            <span class="text-xs font-semibold text-emerald-600 flex items-center gap-1 mt-1">
+                                <i class="fa-solid fa-chart-line"></i> هامش ربح 41.4%
+                            </span>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shadow-inner">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Main Chart -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-slate-800 text-base">تحليل أداء المبيعات والمشتريات الربع سنوية</h3>
+                            <select class="bg-slate-50 border border-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none">
+                                <option>عام 2026</option>
+                                <option>عام 2025</option>
+                            </select>
+                        </div>
+                        <div class="h-72">
+                            <canvas id="mainChart"></canvas>
+                        </div>
+                    </div>
+                    <!-- Secondary Pie Chart -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base mb-1">توزيع المصروفات حسب الأقسام</h3>
+                            <p class="text-xs text-slate-400 mb-4">نسب الإنفاق التشغيلي للشركات</p>
+                            <div class="h-52 flex items-center justify-center">
+                                <canvas id="pieChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-4 border-t border-slate-100 text-xs font-semibold">
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-sky-600"></span> المشتريات (45%)</div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> الرواتب (30%)</div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-500"></span> التشغيل (15%)</div>
+                            <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-purple-500"></span> التسويق (10%)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 2: PROCUREMENT ================= -->
+            <div id="tab-procurement" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">إدارة المشتريات (Procurement & POs)</h2>
+                        <p class="text-xs text-slate-500">إنشاء ومتابعة طلبات الشراء، أوامر الشراء للموردين، واعتماد الفواتير.</p>
+                    </div>
+                    <button onclick="openModal('procurement-modal')" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-sky-600/20 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>إنشاء أمر شراء جديد</span>
+                    </button>
+                </div>
+
+                <!-- Table Container -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between gap-3">
+                        <div class="relative w-full sm:w-80">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400"><i class="fa-solid fa-search"></i></span>
+                            <input type="text" id="search-procurement" onkeyup="filterTable('procurement-table', 'search-procurement')" placeholder="بحث برقم الأمر أو اسم المورد..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                        </div>
+                        <div class="flex gap-2">
+                            <select id="filter-proc-status" onchange="filterProcurementStatus()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none">
+                                <option value="">جميع الحالات</option>
+                                <option value="معتمد">معتمد</option>
+                                <option value="قيد المراجعة">قيد المراجعة</option>
+                                <option value="مكتمل">مكتمل</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="procurement-table" class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 text-xs font-bold border-b border-slate-200">
+                                    <th class="py-3.5 px-4">رقم الأمر (PO ID)</th>
+                                    <th class="py-3.5 px-4">اسم المورد</th>
+                                    <th class="py-3.5 px-4">الصنف / المواد</th>
+                                    <th class="py-3.5 px-4">الكمية</th>
+                                    <th class="py-3.5 px-4">الإجمالي (ج.م)</th>
+                                    <th class="py-3.5 px-4">الحالة</th>
+                                    <th class="py-3.5 px-4">التاريخ</th>
+                                    <th class="py-3.5 px-4 text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm" id="procurement-tbody">
+                                <!-- Dynamic Rows -->
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">PO-90481</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">شركة التوريدات الحديثة</td>
+                                    <td class="py-3 px-4 text-slate-600">لوحات تحكم إلكترونية PLC</td>
+                                    <td class="py-3 px-4 text-slate-600">45 وحدة</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">225,000</td>
+                                    <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">معتمد</span></td>
+                                    <td class="py-3 px-4 text-slate-500 text-xs">2026/04/15</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">PO-90482</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">مؤسسة النور الهندسية</td>
+                                    <td class="py-3 px-4 text-slate-600">كابلات نحاسية معزولة</td>
+                                    <td class="py-3 px-4 text-slate-600">120 لفة</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">96,000</td>
+                                    <td class="py-3 px-4"><span class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-amber-200">قيد المراجعة</span></td>
+                                    <td class="py-3 px-4 text-slate-500 text-xs">2026/04/18</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">PO-90483</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">المصري للصلب والمعادن</td>
+                                    <td class="py-3 px-4 text-slate-600">قضبان فولاذية مصلبة</td>
+                                    <td class="py-3 px-4 text-slate-600">15 طن</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">450,000</td>
+                                    <td class="py-3 px-4"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-blue-200">مكتمل</span></td>
+                                    <td class="py-3 px-4 text-slate-500 text-xs">2026/04/10</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 3: INVENTORY ================= -->
+            <div id="tab-inventory" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">إدارة المخزون والمستودعات (Inventory Management)</h2>
+                        <p class="text-xs text-slate-500">متابعة أرصدة الأصناف، المستودعات المركزية، وحدود طلب إعادة التوريد.</p>
+                    </div>
+                    <button onclick="openModal('inventory-modal')" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-sky-600/20 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-box"></i>
+                        <span>إضافة صنف جديد</span>
+                    </button>
+                </div>
+
+                <!-- Table Container -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                        <div class="relative w-full sm:w-80">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400"><i class="fa-solid fa-search"></i></span>
+                            <input type="text" id="search-inventory" onkeyup="filterTable('inventory-table', 'search-inventory')" placeholder="بحث باسم الصنف أو الكود..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="inventory-table" class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 text-xs font-bold border-b border-slate-200">
+                                    <th class="py-3.5 px-4">كود الصنف (SKU)</th>
+                                    <th class="py-3.5 px-4">اسم الصنف</th>
+                                    <th class="py-3.5 px-4">المستودع الرئيسي</th>
+                                    <th class="py-3.5 px-4">الرصيد المتاح</th>
+                                    <th class="py-3.5 px-4">سعر الوحدة (ج.م)</th>
+                                    <th class="py-3.5 px-4">الحالة</th>
+                                    <th class="py-3.5 px-4 text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm" id="inventory-tbody">
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">INV-8021</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">وحدة معالجة مركزية Xeon</td>
+                                    <td class="py-3 px-4 text-slate-600">المستودع الرئيسي - القاهرة</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">340 وحدة</td>
+                                    <td class="py-3 px-4 text-slate-600">12,500</td>
+                                    <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">متوفر بكثرة</span></td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">INV-8022</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">شاشات عرض صناعية 32 بوصة</td>
+                                    <td class="py-3 px-4 text-slate-600">مستودع الإسكندرية</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">18 وحدة</td>
+                                    <td class="py-3 px-4 text-slate-600">8,400</td>
+                                    <td class="py-3 px-4"><span class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-amber-200">مخزون منخفض</span></td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">INV-8023</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">محولات طاقة احتياطية UPS 10KVA</td>
+                                    <td class="py-3 px-4 text-slate-600">المستودع الرئيسي - القاهرة</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">65 وحدة</td>
+                                    <td class="py-3 px-4 text-slate-600">24,000</td>
+                                    <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">متوفر</span></td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 4: SALES & DISTRIBUTION ================= -->
+            <div id="tab-sales" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">المبيعات والتوزيع (Sales & Distribution)</h2>
+                        <p class="text-xs text-slate-500">إدارة أوامر العملاء، الفواتير الصادرة، وعقود التوريد والتحصيل.</p>
+                    </div>
+                    <button onclick="openModal('sales-modal')" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-sky-600/20 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>إصدار فاتورة مبيعات</span>
+                    </button>
+                </div>
+
+                <!-- Table Container -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                        <div class="relative w-full sm:w-80">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400"><i class="fa-solid fa-search"></i></span>
+                            <input type="text" id="search-sales" onkeyup="filterTable('sales-table', 'search-sales')" placeholder="بحث باسم العميل أو الفاتورة..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="sales-table" class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 text-xs font-bold border-b border-slate-200">
+                                    <th class="py-3.5 px-4">رقم الفاتورة (Invoice)</th>
+                                    <th class="py-3.5 px-4">اسم العميل / الشركة</th>
+                                    <th class="py-3.5 px-4">المنتجات المباعة</th>
+                                    <th class="py-3.5 px-4">المبلغ الإجمالي (ج.م)</th>
+                                    <th class="py-3.5 px-4">حالة الدفع</th>
+                                    <th class="py-3.5 px-4">تاريخ الاستحقاق</th>
+                                    <th class="py-3.5 px-4 text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm" id="sales-tbody">
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">INV-5012</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">مجموعة السلسبيل التجارية</td>
+                                    <td class="py-3 px-4 text-slate-600">أنظمة سيرفرات مركزية</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">680,000</td>
+                                    <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">مسدد بالكامل</span></td>
+                                    <td class="py-3 px-4 text-slate-500 text-xs">2026/04/12</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">INV-5013</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">شركة الدلتا للصناعات الكيماوية</td>
+                                    <td class="py-3 px-4 text-slate-600">محولات طاقة وأجهزة تحكم</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">320,000</td>
+                                    <td class="py-3 px-4"><span class="bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-amber-200">تحت التحصيل</span></td>
+                                    <td class="py-3 px-4 text-slate-500 text-xs">2026/04/28</td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 5: HR & PAYROLL ================= -->
+            <div id="tab-hr" class="tab-content hidden space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">الموارد البشرية وشئون الرواتب (HR & Payroll)</h2>
+                        <p class="text-xs text-slate-500">إدارة سجلات الموظفين، الأقسام الإدارية، كشوف الرواتب الشهرية والبدلات.</p>
+                    </div>
+                    <button onclick="openModal('hr-modal')" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md shadow-sky-600/20 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>إضافة موظف جديد</span>
+                    </button>
+                </div>
+
+                <!-- Table Container -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                        <div class="relative w-full sm:w-80">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400"><i class="fa-solid fa-search"></i></span>
+                            <input type="text" id="search-hr" onkeyup="filterTable('hr-table', 'search-hr')" placeholder="بحث باسم الموظف أو القسم..." class="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="hr-table" class="w-full text-right border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-600 text-xs font-bold border-b border-slate-200">
+                                    <th class="py-3.5 px-4">كود الموظف (ID)</th>
+                                    <th class="py-3.5 px-4">اسم الموظف</th>
+                                    <th class="py-3.5 px-4">القسم / الإدارة</th>
+                                    <th class="py-3.5 px-4">المسمى الوظيفي</th>
+                                    <th class="py-3.5 px-4">الراتب الأساسي (ج.م)</th>
+                                    <th class="py-3.5 px-4">الحالة</th>
+                                    <th class="py-3.5 px-4 text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-sm" id="hr-tbody">
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">EMP-104</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">طارق عبد العزيز محمود</td>
+                                    <td class="py-3 px-4 text-slate-600">الإدارة المالية والحسابات</td>
+                                    <td class="py-3 px-4 text-slate-600">محاسب أول مالي</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">18,500</td>
+                                    <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">على رأس العمل</span></td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="py-3 px-4 font-bold text-sky-600">EMP-105</td>
+                                    <td class="py-3 px-4 font-medium text-slate-800">سارة إبراهيم حسن</td>
+                                    <td class="py-3 px-4 text-slate-600">الموارد البشرية</td>
+                                    <td class="py-3 px-4 text-slate-600">أخصائي توظيف وتدريب</td>
+                                    <td class="py-3 px-4 font-bold text-slate-800">14,200</td>
+                                    <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">على رأس العمل</span></td>
+                                    <td class="py-3 px-4 text-center">
+                                        <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ================= MODALS FOR DATA ENTRY ================= -->
+    <!-- Procurement Modal -->
+    <div id="procurement-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all">
+            <div class="bg-sapBlue text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-bold text-base"><i class="fa-solid fa-cart-shopping ml-2"></i> إنشاء أمر شراء جديد</h3>
+                <button onclick="closeModal('procurement-modal')" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-procurement" onsubmit="addProcurementRow(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">اسم المورد</label>
+                    <input type="text" id="proc-supplier" required placeholder="مثال: شركة التوريدات الحديثة" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">الصنف أو المواد المطلوبة</label>
+                    <input type="text" id="proc-item" required placeholder="مثال: وحدات معالجة ورق مقوى" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">الكمية</label>
+                        <input type="text" id="proc-qty" required placeholder="مثال: 50 وحدة" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">الإجمالي (ج.م)</label>
+                        <input type="number" id="proc-total" required placeholder="مثال: 150000" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">حالة الأمر</label>
+                    <select id="proc-status" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                        <option value="معتمد">معتمد</option>
+                        <option value="قيد المراجعة">قيد المراجعة</option>
+                        <option value="مكتمل">مكتمل</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('procurement-modal')" class="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-600/20">حفظ الأمر</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inventory Modal -->
+    <div id="inventory-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all">
+            <div class="bg-sapBlue text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-bold text-base"><i class="fa-solid fa-box ml-2"></i> إضافة صنف جديد للمستودع</h3>
+                <button onclick="closeModal('inventory-modal')" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-inventory" onsubmit="addInventoryRow(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">اسم الصنف</label>
+                    <input type="text" id="inv-name" required placeholder="مثال: شاشات ذكية تفاعلية" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">المستودع</label>
+                    <input type="text" id="inv-warehouse" required placeholder="مثال: المستودع الرئيسي - القاهرة" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">الرصيد المتاح</label>
+                        <input type="text" id="inv-qty" required placeholder="مثال: 120 وحدة" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">سعر الوحدة (ج.م)</label>
+                        <input type="number" id="inv-price" required placeholder="مثال: 7500" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('inventory-modal')" class="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-600/20">إضافة الصنف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sales Modal -->
+    <div id="sales-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all">
+            <div class="bg-sapBlue text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-bold text-base"><i class="fa-solid fa-file-invoice ml-2"></i> إصدار فاتورة مبيعات جديدة</h3>
+                <button onclick="closeModal('sales-modal')" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-sales" onsubmit="addSalesRow(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">اسم العميل / الشركة</label>
+                    <input type="text" id="sales-client" required placeholder="مثال: شركة الأفق للتجارة والتوكيلات" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">المنتجات المباعة</label>
+                    <input type="text" id="sales-items" required placeholder="مثال: معدات وأجهزة شبكات متطورة" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">المبلغ الإجمالي (ج.م)</label>
+                        <input type="number" id="sales-amount" required placeholder="مثال: 410000" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">تاريخ الاستحقاق</label>
+                        <input type="date" id="sales-date" required class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">حالة الدفع</label>
+                    <select id="sales-status" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                        <option value="مسدد بالكامل">مسدد بالكامل</option>
+                        <option value="تحت التحصيل">تحت التحصيل</option>
+                        <option value="متأخر السداد">متأخر السداد</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('sales-modal')" class="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-600/20">إصدار الفاتورة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- HR Modal -->
+    <div id="hr-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all">
+            <div class="bg-sapBlue text-white px-6 py-4 flex justify-between items-center">
+                <h3 class="font-bold text-base"><i class="fa-solid fa-user-plus ml-2"></i> إضافة موظف جديد للسجل</h3>
+                <button onclick="closeModal('hr-modal')" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="form-hr" onsubmit="addHrRow(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">اسم الموظف الرباعي</label>
+                    <input type="text" id="hr-name" required placeholder="مثال: هاني مصطفى السيد" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">القسم / الإدارة</label>
+                        <input type="text" id="hr-dept" required placeholder="مثال: تقنية المعلومات IT" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">المسمى الوظيفي</label>
+                        <input type="text" id="hr-title" required placeholder="مثال: مهندس شبكات سحابية" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">الراتب الأساسي (ج.م)</label>
+                        <input type="number" id="hr-salary" required placeholder="مثال: 16000" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">الحالة الوظيفية</label>
+                        <select id="hr-status" class="w-full px-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-sky-500">
+                            <option value="على رأس العمل">على رأس العمل</option>
+                            <option value="إجازة سنوية">إجازة سنوية</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('hr-modal')" class="px-4 py-2 rounded-xl text-sm font-semibold border border-slate-200 text-slate-600 hover:bg-slate-50">إلغاء</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl text-sm font-semibold bg-sky-600 hover:bg-sky-700 text-white shadow-md shadow-sky-600/20">حفظ الموظف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic & Chart Initialization -->
+    <script>
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.add('hidden'));
+
+            // Show selected tab
+            const targetTab = document.getElementById('tab-' + tabId);
+            if (targetTab) {
+                targetTab.classList.remove('hidden');
+            }
+
+            // Update sidebar active link styling
+            const links = document.querySelectorAll('.nav-link');
+            links.forEach(link => {
+                link.classList.remove('bg-sky-600', 'text-white', 'shadow-md', 'shadow-sky-900/30');
+                link.classList.add('text-slate-300', 'hover:bg-slate-800', 'hover:text-white');
+                if (link.getAttribute('data-target') === tabId) {
+                    link.classList.add('bg-sky-600', 'text-white', 'shadow-md', 'shadow-sky-900/30');
+                    link.classList.remove('text-slate-300', 'hover:bg-slate-800', 'hover:text-white');
+                }
+            });
+
+            // Close mobile sidebar if open
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth < 1024) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+
+        // Mobile Sidebar Toggle
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+            });
+        }
+
+        // Toast Notification System (Replaces alert())
+        function showNotification(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-emerald-600 text-white';
+            let icon = 'fa-circle-check';
+            if (type === 'info') {
+                bgClass = 'bg-sky-600 text-white';
+                icon = 'fa-circle-info';
+            } else if (type === 'error') {
+                bgClass = 'bg-rose-600 text-white';
+                icon = 'fa-circle-exclamation';
+            }
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl ${bgClass} text-sm font-semibold transform translate-y-2 opacity-0 transition-all duration-300`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Modal Management
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openGlobalModal() {
+            // Opens procurement modal as default quick action
+            openModal('procurement-modal');
+        }
+
+        // Table Filtering Functions
+        function filterTable(tableId, inputId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById(tableId);
+            const trs = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < trs.length; i++) {
+                let match = false;
+                const tds = trs[i].getElementsByTagName('td');
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j]) {
+                        if (tds[j].innerText.toLowerCase().indexOf(filter) > -1) {
+                            match = true;
+                            break;
+                        }
+                    }
+                }
+                trs[i].style.display = match ? '' : 'none';
+            }
+        }
+
+        function filterProcurementStatus() {
+            const statusFilter = document.getElementById('filter-proc-status').value;
+            const table = document.getElementById('procurement-table');
+            const trs = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < trs.length; i++) {
+                const statusSpan = trs[i].querySelector('td:nth-child(6) span');
+                if (statusSpan) {
+                    const statusText = statusSpan.innerText;
+                    if (statusFilter === '' || statusText === statusFilter) {
+                        trs[i].style.display = '';
+                    } else {
+                        trs[i].style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        // Delete Row Function
+        function deleteRow(btn) {
+            const row = btn.closest('tr');
+            row.style.opacity = '0';
+            setTimeout(() => {
+                row.remove();
+                showNotification('تم حذف السجل بنجاح من النظام', 'info');
+            }, 300);
+        }
+
+        // Data Add Functions (Dynamic Insertion)
+        function addProcurementRow(event) {
+            event.preventDefault();
+            const supplier = document.getElementById('proc-supplier').value;
+            const item = document.getElementById('proc-item').value;
+            const qty = document.getElementById('proc-qty').value;
+            const total = document.getElementById('proc-total').value;
+            const status = document.getElementById('proc-status').value;
+
+            const tbody = document.getElementById('procurement-tbody');
+            const randomId = 'PO-' + Math.floor(10000 + Math.random() * 90000);
+            const today = new Date().toISOString().split('T')[0];
+
+            let badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            if (status === 'قيد المراجعة') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+            if (status === 'مكتمل') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+
+            const newRow = document.createElement('tr');
+            newRow.className = 'hover:bg-slate-50 transition-all';
+            newRow.innerHTML = `
+                <td class="py-3 px-4 font-bold text-sky-600">${randomId}</td>
+                <td class="py-3 px-4 font-medium text-slate-800">${supplier}</td>
+                <td class="py-3 px-4 text-slate-600">${item}</td>
+                <td class="py-3 px-4 text-slate-600">${qty}</td>
+                <td class="py-3 px-4 font-bold text-slate-800">${Number(total).toLocaleString()}</td>
+                <td class="py-3 px-4"><span class="${badgeClass} px-2.5 py-1 rounded-full text-xs font-semibold border">${status}</span></td>
+                <td class="py-3 px-4 text-slate-500 text-xs">${today}</td>
+                <td class="py-3 px-4 text-center">
+                    <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                </td>
+            `;
+            tbody.prepend(newRow);
+            closeModal('procurement-modal');
+            document.getElementById('form-procurement').reset();
+            showNotification('تم إصدار أمر الشراء بنجاح وتحديث السجلات');
+        }
+
+        function addInventoryRow(event) {
+            event.preventDefault();
+            const name = document.getElementById('inv-name').value;
+            const warehouse = document.getElementById('inv-warehouse').value;
+            const qty = document.getElementById('inv-qty').value;
+            const price = document.getElementById('inv-price').value;
+
+            const tbody = document.getElementById('inventory-tbody');
+            const sku = 'INV-' + Math.floor(8000 + Math.random() * 1000);
+
+            const newRow = document.createElement('tr');
+            newRow.className = 'hover:bg-slate-50 transition-all';
+            newRow.innerHTML = `
+                <td class="py-3 px-4 font-bold text-sky-600">${sku}</td>
+                <td class="py-3 px-4 font-medium text-slate-800">${name}</td>
+                <td class="py-3 px-4 text-slate-600">${warehouse}</td>
+                <td class="py-3 px-4 font-bold text-slate-800">${qty}</td>
+                <td class="py-3 px-4 text-slate-600">${Number(price).toLocaleString()}</td>
+                <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">متوفر</span></td>
+                <td class="py-3 px-4 text-center">
+                    <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                </td>
+            `;
+            tbody.prepend(newRow);
+            closeModal('inventory-modal');
+            document.getElementById('form-inventory').reset();
+            showNotification('تمت إضافة الصنف الجديد إلى المستودع بنجاح');
+        }
+
+        function addSalesRow(event) {
+            event.preventDefault();
+            const client = document.getElementById('sales-client').value;
+            const items = document.getElementById('sales-items').value;
+            const amount = document.getElementById('sales-amount').value;
+            const date = document.getElementById('sales-date').value;
+            const status = document.getElementById('sales-status').value;
+
+            const tbody = document.getElementById('sales-tbody');
+            const invId = 'INV-' + Math.floor(5000 + Math.random() * 1000);
+
+            let badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            if (status === 'تحت التحصيل') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+            if (status === 'متأخر السداد') badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+
+            const newRow = document.createElement('tr');
+            newRow.className = 'hover:bg-slate-50 transition-all';
+            newRow.innerHTML = `
+                <td class="py-3 px-4 font-bold text-sky-600">${invId}</td>
+                <td class="py-3 px-4 font-medium text-slate-800">${client}</td>
+                <td class="py-3 px-4 text-slate-600">${items}</td>
+                <td class="py-3 px-4 font-bold text-slate-800">${Number(amount).toLocaleString()}</td>
+                <td class="py-3 px-4"><span class="${badgeClass} px-2.5 py-1 rounded-full text-xs font-semibold border">${status}</span></td>
+                <td class="py-3 px-4 text-slate-500 text-xs">${date}</td>
+                <td class="py-3 px-4 text-center">
+                    <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                </td>
+            `;
+            tbody.prepend(newRow);
+            closeModal('sales-modal');
+            document.getElementById('form-sales').reset();
+            showNotification('تم إصدار فاتورة المبيعات بنجاح');
+        }
+
+        function addHrRow(event) {
+            event.preventDefault();
+            const name = document.getElementById('hr-name').value;
+            const dept = document.getElementById('hr-dept').value;
+            const title = document.getElementById('hr-title').value;
+            const salary = document.getElementById('hr-salary').value;
+            const status = document.getElementById('hr-status').value;
+
+            const tbody = document.getElementById('hr-tbody');
+            const empId = 'EMP-' + Math.floor(100 + Math.random() * 900);
+
+            const newRow = document.createElement('tr');
+            newRow.className = 'hover:bg-slate-50 transition-all';
+            newRow.innerHTML = `
+                <td class="py-3 px-4 font-bold text-sky-600">${empId}</td>
+                <td class="py-3 px-4 font-medium text-slate-800">${name}</td>
+                <td class="py-3 px-4 text-slate-600">${dept}</td>
+                <td class="py-3 px-4 text-slate-600">${title}</td>
+                <td class="py-3 px-4 font-bold text-slate-800">${Number(salary).toLocaleString()}</td>
+                <td class="py-3 px-4"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-200">${status}</span></td>
+                <td class="py-3 px-4 text-center">
+                    <button onclick="deleteRow(this)" class="text-slate-400 hover:text-rose-600 p-1.5 transition-all"><i class="fa-solid fa-trash-can"></i></button>
+                </td>
+            `;
+            tbody.prepend(newRow);
+            closeModal('hr-modal');
+            document.getElementById('form-hr').reset();
+            showNotification('تم تسجيل بيانات الموظف الجديد بنجاح');
+        }
+
+        // Initialize Charts via Chart.js on Window Load
+        window.onload = function() {
+            // Main Line Chart
+            const ctxMain = document.getElementById('mainChart').getContext('2d');
+            new Chart(ctxMain, {
+                type: 'line',
+                data: {
+                    labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+                    datasets: [
+                        {
+                            label: 'المبيعات (ج.م)',
+                            data: [320000, 450000, 520000, 480000, 610000, 750000],
+                            borderColor: '#005073',
+                            backgroundColor: 'rgba(0, 80, 115, 0.05)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'المشتريات (ج.م)',
+                            data: [210000, 310000, 390000, 340000, 450000, 530000],
+                            borderColor: '#1d9bf0',
+                            backgroundColor: 'rgba(29, 155, 240, 0.05)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { family: 'Cairo', size: 12 }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            grid: { color: '#f1f5f9' }
+                        }
+                    }
+                }
+            });
+
+            // Pie Chart for Expenses
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['المشتريات', 'الرواتب', 'التشغيل', 'التسويق'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: ['#005073', '#10b981', '#f59e0b', '#8b5cf6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    cutout: '70%'
+                }
+            });
+        };
+    </script>
+</body>
+</html>
